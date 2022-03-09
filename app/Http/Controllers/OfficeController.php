@@ -28,6 +28,7 @@ class OfficeController extends Controller
                 return $builder->whereRelation('reservations', 'user_id', '=', request('user_id'));
             })
             ->latest('id')
+            ->with(['images', 'tags', 'user'])
             ->paginate(20);
 
         return OfficeResource::collection($offices);
