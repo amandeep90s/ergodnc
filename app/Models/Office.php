@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,11 +28,13 @@ class Office extends Model
         'monthly_discount' => 'integer',
     ];
 
-    public function user() : BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function reservations() : HasMany {
+    public function reservations(): HasMany
+    {
         return $this->hasMany(Reservation::class);
     }
 
@@ -40,7 +43,18 @@ class Office extends Model
         return $this->morphMany(Image::class, 'resource');
     }
 
-    public function tags() : BelongsToMany {
+    public function tags(): BelongsToMany
+    {
         return $this->belongsToMany(Tag::class, 'offices_tags');
+    }
+
+    public function scopeNearestTo(Builder $builder, $lat, $lng): Builder
+    {
+        return $builder
+            ->select()
+            ->selectRaw(
+                'SQRT(POW(69.1 * (lat - ?), 2) + POW(69.1 * (? - lng) * COS(lat / 57.3), 2)) AS distance',
+                [$lat, $lng]
+            )->orderBy('distance');
     }
 }

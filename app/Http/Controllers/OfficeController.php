@@ -28,6 +28,11 @@ class OfficeController extends Controller
             ->when(request('user_id'), function (Builder $builder) {
                 return $builder->whereRelation('reservations', 'user_id', '=', request('user_id'));
             })
+            ->when(request('lat') && request('lng'), function ($builder) {
+                $builder->nearestTo(request('lat'), request('lng'));
+            }, function ($builder) {
+                $builder->orderBy('id', 'ASC');
+            })
             ->latest('id')
             ->with(['images', 'tags', 'user'])
             ->withCount(['reservations' => function ($builder) {

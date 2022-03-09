@@ -9,7 +9,6 @@ use App\Models\Reservation;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class OfficeControllerTest extends TestCase
@@ -109,5 +108,34 @@ class OfficeControllerTest extends TestCase
         $response = $this->get('/api/offices');
         $response->assertOk();
         $this->assertEquals(1, $response->json('data')[0]['reservations_count']);
+    }
+
+    /**
+     * @test
+     */
+    public function itOrdersByDistanceWhenCoordinatesAreProvided()
+    {
+
+        Office::factory()->create([
+            'lat' => '39.74051727562952',
+            'lng' => '-8.770375324893696',
+            'title' => 'Leiria'
+        ]);
+
+        Office::factory()->create([
+            'lat' => '39.07753883078113',
+            'lng' => '-9.281266331143293',
+            'title' => 'Torres Vedras'
+        ]);
+
+        $response = $this->get('/api/offices?lat=38.720661384644046&lng=-9.16044783453807');
+        $response->assertOk();
+        $this->assertEquals('Torres Vedras', $response->json('data')[0]['title']);
+        $this->assertEquals('Leiria', $response->json('data')[1]['title']);
+
+        $response = $this->get('/api/offices');
+        $response->assertOk();
+        $this->assertEquals('Leiria', $response->json('data')[0]['title']);
+        $this->assertEquals('Torres Vedras', $response->json('data')[1]['title']);
     }
 }
