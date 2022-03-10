@@ -70,9 +70,13 @@ class OfficeController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Office $office)
     {
-        //
+        $office->loadCount(['reservations' => function ($builder) {
+            $builder->where('status', Reservation::STATUS_ACTIVE);
+        }])->load(['images', 'tags', 'user']);
+
+        return OfficeResource::make($office);
     }
 
     /**
