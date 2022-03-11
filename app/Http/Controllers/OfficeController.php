@@ -22,11 +22,11 @@ class OfficeController extends Controller
         $offices = Office::query()
             ->where('approval_status', Office::APPROVAL_APPROVED)
             ->where('hidden', false)
-            ->when(request('host_id'), function ($builder) {
-                return $builder->whereUserId(request('host_id'));
+            ->when(request('user_id'), function ($builder) {
+                return $builder->whereUserId(request('user_id'));
             })
-            ->when(request('user_id'), function (Builder $builder) {
-                return $builder->whereRelation('reservations', 'user_id', '=', request('user_id'));
+            ->when(request('visitor_id'), function (Builder $builder) {
+                return $builder->whereRelation('reservations', 'user_id', '=', request('visitor_id'));
             })
             ->when(request('lat') && request('lng'), function ($builder) {
                 $builder->nearestTo(request('lat'), request('lng'));

@@ -18,10 +18,11 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function isListsAllOfficesPaginatedWay()
+    public function itListsAllOfficesPaginatedWay()
     {
         Office::factory(3)->create();
         $response = $this->get('/api/offices');
+        dd($response->json());
         $response->assertOk();
         $response->assertJsonCount(3, 'data');
         $this->assertNotNull($response->json('data')[0]['id']);
@@ -32,7 +33,7 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function isOnlyListsOfficesThatAreNotHiddenAndApproved()
+    public function itOnlyListsOfficesThatAreNotHiddenAndApproved()
     {
         Office::factory(3)->create();
         Office::factory(1)->create(['hidden' => true]);
@@ -46,12 +47,12 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function isFiltersByHostId()
+    public function itFiltersByUserId()
     {
         Office::factory(3)->create();
         $host = User::factory()->create();
         $office = Office::factory()->for($host)->create();
-        $response = $this->get('/api/offices?host_id=' . $host->id);
+        $response = $this->get('/api/offices?user_id=' . $host->id);
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
         $this->assertEquals($office->id, $response->json('data')[0]['id']);
@@ -60,7 +61,7 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function isFiltersByUserId()
+    public function itFiltersByVisitorId()
     {
         Office::factory(3)->create();
 
@@ -68,7 +69,7 @@ class OfficeControllerTest extends TestCase
         $office = Office::factory()->create();
         Reservation::factory()->for(Office::factory())->create();
         Reservation::factory()->for($office)->for($user)->create();
-        $response = $this->get('/api/offices?user_id=' . $user->id);
+        $response = $this->get('/api/offices?visitor_id=' . $user->id);
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
         $this->assertEquals($office->id, $response->json('data')[0]['id']);
@@ -81,10 +82,9 @@ class OfficeControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $tag = Tag::factory()->create();
-
         $office = Office::factory()->for($user)->create();
         $office->tags()->attach($tag);
-        Image::factory()->for($office, 'resource')->create();
+        $office->images()->create(['path' => 'image.jpg']);
 
         $response = $this->get('/api/offices');
         $response->assertOk();
