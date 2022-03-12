@@ -52,6 +52,10 @@ class OfficeController extends Controller
      */
     public function store(): JsonResource
     {
+        if(!auth()->user()->tokenCan('office.create')) {
+            abort(403);
+        }
+
         $attributes = validator(request()->all(), [
             'title' => ['required', 'string'],
             'description' => ['required', 'string'],

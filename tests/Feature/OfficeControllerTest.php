@@ -188,4 +188,19 @@ class OfficeControllerTest extends TestCase
             'title' => 'Office in Pathankot'
         ]);
     }
+
+    /**
+     * @test
+     */
+    public function itDoesntAllowCreatingIfScopeIsNotProvided()
+    {
+        $user = User::factory()->createQuietly();
+        $token = $user->createToken('test', ['office.create']);
+
+        $response = $this->postJson('/api/offices', [], [
+            'Authorization' => 'Bearer ' . $token->plainTextToken
+        ]);
+
+        $response->assertStatus(422);
+    }
 }
