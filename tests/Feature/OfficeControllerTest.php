@@ -20,14 +20,12 @@ class OfficeControllerTest extends TestCase
      */
     public function itListsAllOfficesPaginatedWay()
     {
-        Office::factory(3)->create();
+        Office::factory(30)->create();
         $response = $this->get('/api/offices');
-        dd($response->json());
-        $response->assertOk();
-        $response->assertJsonCount(3, 'data');
-        $this->assertNotNull($response->json('data')[0]['id']);
-        $this->assertNotNull($response->json('meta'));
-        $this->assertNotNull($response->json('links'));
+        $response->assertOk()
+            ->assertJsonStructure(['data', 'meta', 'links'])
+            ->assertJsonCount(20, 'data')
+            ->assertJsonStructure(['data' => ['*' => ['id', 'title']]]);
     }
 
     /**
@@ -87,13 +85,10 @@ class OfficeControllerTest extends TestCase
         $office->images()->create(['path' => 'image.jpg']);
 
         $response = $this->get('/api/offices');
-        $response->assertOk();
-
-        $this->assertIsArray($response->json('data')[0]['tags']);
-        $this->assertCount(1, $response->json('data')[0]['tags']);
-        $this->assertIsArray($response->json('data')[0]['images']);
-        $this->assertCount(1, $response->json('data')[0]['images']);
-        $this->assertEquals($user->id, $response->json('data')[0]['user']['id']);
+        $response->assertOk()
+            ->assertJsonCount(1, 'data.0.tags')
+            ->assertJsonCount(1, 'data.0.images')
+            ->assertJsonPath('data.0.user.id', $user->id);
     }
 
     /**
