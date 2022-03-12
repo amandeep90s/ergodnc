@@ -157,4 +157,35 @@ class OfficeControllerTest extends TestCase
         $this->assertCount(1, $response->json('data')['images']);
         $this->assertEquals($user->id, $response->json('data')['user']['id']);
     }
+
+    /**
+     * @test
+     */
+    public function itCreatesAnOffice()
+    {
+        $user = User::factory()->createQuietly();
+        $tag = Tag::factory()->create();
+        $tag2 = Tag::factory()->create();
+
+        $this->actingAs($user);
+        $response = $this->postJson('/api/offices', [
+            'title' => 'Office in Pathankot',
+            'description' => 'Lorem ipsum',
+            'lat' => '39.74051727562952',
+            'lng' => '-8.770375324893696',
+            'address_line1' => 'Address 1',
+            'price_per_day' => 1000,
+            'monthly_discount' => 5,
+            'tags' => [$tag->id, $tag2->id]
+        ]);
+        $response->assertCreated()
+            ->assertJsonPath('data.title', 'Office in Pathankot')
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.approval_status', Office::APPROVAL_PENDING)
+            ->assertJsonCount(2, 'data.tags');
+
+        $this->assertDatabaseHas('offices', [
+            'title' => 'Office in Pathankot'
+        ]);
+    }
 }

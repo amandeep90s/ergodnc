@@ -8,7 +8,9 @@ use App\Models\Reservation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\Response;
+use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 
 class OfficeController extends Controller
 {
@@ -44,33 +46,40 @@ class OfficeController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @return JsonResource
      */
-    public function store(Request $request)
+    public function store(): JsonResource
     {
-        //
+        $attributes = validator(request()->all(), [
+            'title' => ['required', 'string'],
+            'description' => ['required', 'string'],
+            'lat' => ['required', 'numeric'],
+            'lng' => ['required', 'numeric'],
+            'address_line1' => ['required', 'string'],
+            'hidden' => ['boolean'],
+            'price_per_day' => ['required', 'integer', 'min:100'],
+            'monthly_discount' => ['integer', 'min:0', 'max:90'],
+            'tags' => ['array'],
+            'tags.*' => ['integer', Rule::exists('tags', 'id')]
+        ])->validate();
+        $attributes['approval_status'] = Office::APPROVAL_PENDING;
+
+        $office = auth()->user()->offices()->create(
+            Arr::except($attributes, ['tags'])
+        );
+        $office->tags()->sync($attributes['tags']);
+        return OfficeResource::make($office);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param int $id
-     * @return \Illuminate\Http\Response
+     * @param Office $office
+     * @return OfficeResource
      */
-    public function show(Office $office)
+    public function show(Office $office): OfficeResource
     {
         $office->loadCount(['reservations' => function ($builder) {
             $builder->where('status', Reservation::STATUS_ACTIVE);
@@ -80,20 +89,9 @@ class OfficeController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      * @param int $id
      * @return \Illuminate\Http\Response
      */
